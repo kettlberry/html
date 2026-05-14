@@ -356,9 +356,10 @@
     // ─── Читаем URL-параметры ───
     const params     = new URLSearchParams(window.location.search);
     const urlAmount  = parseFloat(params.get('amount'))   || 0;
-    const bookingId  = params.get('bookingid')            || params.get('booking_id') || '';
-    const tgId       = params.get('tgid')                 || params.get('tg_id') || '';
+    const bookingId  = params.get('booking_id')           || '';
+    const tgId       = params.get('tg_id')                || '';
     const excursion  = params.get('excursion')            || '';
+
     const isFromBot  = urlAmount > 0 && bookingId !== '';
 
     // ─── Настраиваем UI под режим ───
