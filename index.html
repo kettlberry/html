@@ -349,189 +349,189 @@
   </div>
 
   <script>
-    // ─── N8N Webhook URL ───
-    // Сюда вставь URL своего вебхука после создания воркфлоу в N8N
-    const WEBHOOK_URL = 'https://wndravmszd.app.n8n.cloud/webhook/payment-check';
+  // ─── N8N Webhook URL ───
+  // Сюда вставь URL своего вебхука после создания воркфлоу в N8N
+  const WEBHOOK_URL = 'https://wndravmszd.app.n8n.cloud/webhook/payment-check';
 
-    // ─── Читаем URL-параметры ───
-    const params     = new URLSearchParams(window.location.search);
-    const urlAmount  = parseFloat(params.get('amount'))   || 0;
-    const bookingId  = params.get('booking_id')           || '';
-    const tgId       = params.get('tg_id')                || '';
-    const excursion  = params.get('excursion')            || '';
+  // ─── Читаем URL-параметры ───
+  const params     = new URLSearchParams(window.location.search);
+  const urlAmount  = parseFloat(params.get('amount'))   || 0;
+  const bookingId  = params.get('bookingid')            || '';
+  const tgId       = params.get('tgid')                 || '';
+  const excursion  = params.get('excursion')            || '';
 
-    const isFromBot  = urlAmount > 0 && bookingId !== '';
+  const isFromBot  = urlAmount > 0 && bookingId !== '';
 
-    // ─── Настраиваем UI под режим ───
-    if (isFromBot) {
-      // Режим «из бота» — фиксированная сумма
-      document.getElementById('manual-amount-block').style.display = 'none';
-      document.getElementById('fixed-amount-block').style.display  = 'block';
-      document.getElementById('fixed-amount-text').textContent = formatAmount(urlAmount);
-      document.getElementById('page-subtitle').textContent =
-        'Ваша заявка сформирована. Нажмите «Оплатить» для подтверждения.';
+  // ─── Настраиваем UI под режим ───
+  if (isFromBot) {
+    // Режим «из бота» — фиксированная сумма
+    document.getElementById('manual-amount-block').style.display = 'none';
+    document.getElementById('fixed-amount-block').style.display  = 'block';
+    document.getElementById('fixed-amount-text').textContent = formatAmount(urlAmount);
+    document.getElementById('page-subtitle').textContent =
+      'Ваша заявка сформирована. Нажмите «Оплатить» для подтверждения.';
 
-      // Блок с данными заявки
-      const infoBlock = document.getElementById('booking-info');
-      document.getElementById('info-booking-id').textContent = bookingId;
-      if (excursion) {
-        document.getElementById('info-excursion').textContent = decodeURIComponent(excursion);
-        infoBlock.classList.add('visible');
+    // Блок с данными заявки
+    const infoBlock = document.getElementById('booking-info');
+    document.getElementById('info-booking-id').textContent = bookingId;
+    if (excursion) {
+      document.getElementById('info-excursion').textContent = decodeURIComponent(excursion);
+      infoBlock.classList.add('visible');
+    } else {
+      infoBlock.classList.add('visible');
+    }
+
+    // Кнопка сразу активна
+    const payBtn = document.getElementById('pay-btn');
+    payBtn.disabled = false;
+    payBtn.setAttribute('aria-disabled', 'false');
+    payBtn.innerHTML = `
+      <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+      Оплатить ${formatAmount(urlAmount)}
+    `;
+  }
+
+  // ─── Форматирование суммы ───
+  function formatAmount(val) {
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > 0) {
+      return num.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
+    }
+    return '';
+  }
+
+  // ─── Логика ручного ввода (fallback) ───
+  const input   = document.getElementById('amount-input');
+  const payBtn  = document.getElementById('pay-btn');
+  const errorEl = document.getElementById('amount-error');
+
+  if (!isFromBot) {
+    input.addEventListener('input', () => {
+      const val = parseFloat(input.value);
+      const isValid = !isNaN(val) && val > 0;
+      payBtn.disabled = !isValid;
+      payBtn.setAttribute('aria-disabled', String(!isValid));
+      if (isValid) {
+        errorEl.classList.remove('visible');
+        payBtn.innerHTML = `
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Оплатить ${formatAmount(input.value)}
+        `;
+        input.classList.remove('pulse');
+        void input.offsetWidth;
+        input.classList.add('pulse');
       } else {
-        infoBlock.classList.add('visible');
+        payBtn.innerHTML = `
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Оплатить
+        `;
       }
-
-      // Кнопка сразу активна
-      const payBtn = document.getElementById('pay-btn');
-      payBtn.disabled = false;
-      payBtn.setAttribute('aria-disabled', 'false');
-      payBtn.innerHTML = `
-        <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-        </svg>
-        Оплатить ${formatAmount(urlAmount)}
-      `;
-    }
-
-    // ─── Форматирование суммы ───
-    function formatAmount(val) {
-      const num = parseFloat(val);
-      if (!isNaN(num) && num > 0) {
-        return num.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
-      }
-      return '';
-    }
-
-    // ─── Логика ручного ввода (fallback) ───
-    const input   = document.getElementById('amount-input');
-    const payBtn  = document.getElementById('pay-btn');
-    const errorEl = document.getElementById('amount-error');
-
-    if (!isFromBot) {
-      input.addEventListener('input', () => {
-        const val = parseFloat(input.value);
-        const isValid = !isNaN(val) && val > 0;
-        payBtn.disabled = !isValid;
-        payBtn.setAttribute('aria-disabled', String(!isValid));
-        if (isValid) {
-          errorEl.classList.remove('visible');
-          payBtn.innerHTML = `
-            <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-            Оплатить ${formatAmount(input.value)}
-          `;
-          input.classList.remove('pulse');
-          void input.offsetWidth;
-          input.classList.add('pulse');
-        } else {
-          payBtn.innerHTML = `
-            <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-            Оплатить
-          `;
-        }
-      });
-      input.addEventListener('blur', () => {
-        const val = parseFloat(input.value);
-        if (input.value !== '' && (isNaN(val) || val <= 0)) errorEl.classList.add('visible');
-      });
-    }
-
-    // ─── Нажатие «Оплатить» ───
-    payBtn.addEventListener('click', () => {
-      const amount = isFromBot ? urlAmount : parseFloat(input.value);
-      if (!amount || amount <= 0) return;
-
-      // Loading
-      payBtn.disabled = true;
-      payBtn.innerHTML = `
-        <svg class="btn-icon spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-          <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
-        </svg>
-        Обрабатываем…
-      `;
-      document.getElementById('send-error').classList.remove('visible');
-
-      // Отправляем на вебхук N8N
-      const payload = {
-        booking_id: bookingId,
-        paid_amount: amount,
-        tg_id:       tgId,
-        excursion:   decodeURIComponent(excursion)
-      };
-
-      fetch(WEBHOOK_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload)
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        showSuccess(amount);
-      })
-      .catch(() => {
-        // Вебхук не настроен или недоступен — всё равно показываем успех
-        // (для тестирования без реального N8N)
-        showSuccess(amount);
-        // В продакшене можно показывать ошибку:
-        // document.getElementById('send-error').classList.add('visible');
-        // payBtn.disabled = false;
-        // payBtn.innerHTML = `<svg .../>Повторить`;
-      });
     });
+    input.addEventListener('blur', () => {
+      const val = parseFloat(input.value);
+      if (input.value !== '' && (isNaN(val) || val <= 0)) errorEl.classList.add('visible');
+    });
+  }
 
-    // ─── Экран успеха ───
-    function showSuccess(amount) {
-      const overlay  = document.getElementById('success-overlay');
-      const amountEl = document.getElementById('success-amount');
-      amountEl.textContent = formatAmount(String(amount));
-      overlay.classList.add('active');
-      overlay.setAttribute('tabindex', '-1');
-      overlay.focus();
-      launchConfetti();
-    }
+  // ─── Нажатие «Оплатить» ───
+  payBtn.addEventListener('click', () => {
+    const amount = isFromBot ? urlAmount : parseFloat(input.value);
+    if (!amount || amount <= 0) return;
 
-    // ─── Тема ───
-    (function () {
-      const t = document.querySelector('[data-theme-toggle]');
-      const r = document.documentElement;
-      let d = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Loading
+    payBtn.disabled = true;
+    payBtn.innerHTML = `
+      <svg class="btn-icon spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
+      </svg>
+      Обрабатываем…
+    `;
+    document.getElementById('send-error').classList.remove('visible');
+
+    // Отправляем на вебхук N8N
+    const payload = {
+      booking_id: bookingId,
+      paid_amount: amount,
+      tg_id:       tgId,
+      excursion:   decodeURIComponent(excursion)
+    };
+
+    fetch(WEBHOOK_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      showSuccess(amount);
+    })
+    .catch(() => {
+      // Вебхук не настроен или недоступен — всё равно показываем успех
+      // (для тестирования без реального N8N)
+      showSuccess(amount);
+      // В продакшене можно показывать ошибку:
+      // document.getElementById('send-error').classList.add('visible');
+      // payBtn.disabled = false;
+      // payBtn.innerHTML = `<svg .../>Повторить`;
+    });
+  });
+
+  // ─── Экран успеха ───
+  function showSuccess(amount) {
+    const overlay  = document.getElementById('success-overlay');
+    const amountEl = document.getElementById('success-amount');
+    amountEl.textContent = formatAmount(String(amount));
+    overlay.classList.add('active');
+    overlay.setAttribute('tabindex', '-1');
+    overlay.focus();
+    launchConfetti();
+  }
+
+  // ─── Тема ───
+  (function () {
+    const t = document.querySelector('[data-theme-toggle]');
+    const r = document.documentElement;
+    let d = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    r.setAttribute('data-theme', d);
+    updateIcon();
+    t && t.addEventListener('click', () => {
+      d = d === 'dark' ? 'light' : 'dark';
       r.setAttribute('data-theme', d);
       updateIcon();
-      t && t.addEventListener('click', () => {
-        d = d === 'dark' ? 'light' : 'dark';
-        r.setAttribute('data-theme', d);
-        updateIcon();
-      });
-      function updateIcon() {
-        if (!t) return;
-        t.setAttribute('aria-label', 'Переключить на ' + (d === 'dark' ? 'светлую' : 'тёмную') + ' тему');
-        t.innerHTML = d === 'dark'
-          ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
-          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-      }
-    })();
-
-    // ─── Конфетти ───
-    function launchConfetti() {
-      const colors = ['var(--color-primary)','#818cf8','#a5b4fc','#34d399','#fbbf24','#f472b6','#60a5fa'];
-      for (let i = 0; i < 60; i++) {
-        setTimeout(() => {
-          const el = document.createElement('div');
-          el.className = 'confetti-particle';
-          const x = Math.random() * window.innerWidth;
-          const tx = (Math.random() - 0.5) * 300;
-          const ty = Math.random() * 600 + 200;
-          const rot = (Math.random() - 0.5) * 720;
-          const dur = (Math.random() * 1.2 + 0.8).toFixed(2) + 's';
-          el.style.cssText = `left:${x}px;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};--tx:${tx}px;--ty:${ty}px;--rot:${rot}deg;--duration:${dur};width:${Math.random()*6+5}px;height:${Math.random()*6+5}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
-          document.body.appendChild(el);
-          setTimeout(() => el.remove(), parseFloat(dur) * 1000 + 100);
-        }, i * 22);
-      }
+    });
+    function updateIcon() {
+      if (!t) return;
+      t.setAttribute('aria-label', 'Переключить на ' + (d === 'dark' ? 'светлую' : 'тёмную') + ' тему');
+      t.innerHTML = d === 'dark'
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
     }
-  </script>
+  })();
+
+  // ─── Конфетти ───
+  function launchConfetti() {
+    const colors = ['var(--color-primary)','#818cf8','#a5b4fc','#34d399','#fbbf24','#f472b6','#60a5fa'];
+    for (let i = 0; i < 60; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-particle';
+        const x = Math.random() * window.innerWidth;
+        const tx = (Math.random() - 0.5) * 300;
+        const ty = Math.random() * 600 + 200;
+        const rot = (Math.random() - 0.5) * 720;
+        const dur = (Math.random() * 1.2 + 0.8).toFixed(2) + 's';
+        el.style.cssText = `left:${x}px;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};--tx:${tx}px;--ty:${ty}px;--rot:${rot}deg;--duration:${dur};width:${Math.random()*6+5}px;height:${Math.random()*6+5}px;border-radius:${Math.random()>.5?'50%':'2px'}`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), parseFloat(dur) * 1000 + 100);
+      }, i * 22);
+    }
+  }
+</script>
 </body>
 </html>
